@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+// 👇 Esta es la única línea de importación que necesitas para react-pdf
+import { Document, Page, pdfjs } from 'react-pdf'; 
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
+// El código para configurar el worker (esto está perfecto)
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url,
