@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
+
 import {
   XMarkIcon,
   InformationCircleIcon,
@@ -562,11 +562,34 @@ function App() {
         artesanos,
         colecciones,
         gruposArtesanos,
-        mediaTags,
+        mediaTags, // <-- Asegúrate de incluir mediaTags si también lo exportas
       };
-      const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
-      saveAs(blob, `biblioteca_fabrica_contenido_${new Date().toISOString().split('T')[0]}.json`);
+  
+      // Convertir el objeto a un string de texto JSON
+      const datosString = JSON.stringify(datos, null, 2);
+      // Crear un Blob, que es la representación de un archivo en memoria
+      const blob = new Blob([datosString], { type: 'application/json' });
+      
+      // --- Magia para descargar el archivo sin librerías ---
+      
+      // 1. Crear una URL temporal para nuestro archivo en memoria
+      const url = URL.createObjectURL(blob);
+      
+      // 2. Crear un enlace <a> invisible
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `biblioteca_fabrica_contenido_${new Date().toISOString().split('T')[0]}.json`;
+      
+      // 3. Añadir el enlace al cuerpo, simular un clic y luego eliminarlo
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // 4. Liberar la URL de la memoria
+      URL.revokeObjectURL(url);
+      
       mostrarNotificacion("Biblioteca exportada con éxito.");
+  
     } catch (error) {
       console.error("Error al exportar:", error);
       mostrarNotificacion("Error al exportar la biblioteca.");
@@ -930,7 +953,14 @@ function App() {
     });
 
     zip.generateAsync({ type: "blob" }).then(content => {
-      saveAs(content, `${libroSeleccionado.titulo.replace(/[^a-z0-9]/gi, '_')}_${capitulo.titulo.replace(/[^a-z0-9]/gi, '_')}.zip`);
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${libroSeleccionado.titulo.replace(/[^a-z0-9]/gi, '_')}_${capitulo.titulo.replace(/[^a-z0-9]/gi, '_')}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
     mostrarNotificacion("Descarga iniciada.");
   };
