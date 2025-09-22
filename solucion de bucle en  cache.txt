@@ -1,0 +1,32 @@
+# Fábrica de Contenido v5.0 (o el nombre de tu app)
+
+Este es mi proyecto para generar contenido de manera eficiente.
+
+---
+
+## Cómo Iniciar el Proyecto
+
+1.  Instalar las dependencias:
+    ```bash
+    npm install
+    ```
+2.  Ejecutar el servidor de desarrollo:
+    ```bash
+    npm run dev
+    ```
+    La aplicación estará disponible en `http://localhost:5173`.
+
+---
+
+## Solución de Problemas (Troubleshooting)
+
+### El error del "Día de la Marmota" (Cambios no se reflejan)
+
+**Síntoma:** Después de reiniciar el servidor de desarrollo, la aplicación vuelve a un estado anterior y roto, ignorando los últimos cambios guardados.
+
+**Causa:** La caché del servidor de desarrollo (Vite) está corrupta o desactualizada.
+
+**Solución:** Iniciar el servidor forzando la reconstrucción de la caché.
+
+```bash
+npm run dev -- --force
