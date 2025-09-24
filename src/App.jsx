@@ -36,6 +36,7 @@ const Boton = ({ children, onClick, className = '', variant = 'principal', as: C
     principal: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
     secundario: 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600',
     peligro: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
+    success: 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600',
   };
   return <Component onClick={onClick} className={`${baseClasses} ${variants[variant]} ${className}`} {...props}>{children}</Component>;
 };
@@ -1379,6 +1380,28 @@ function App() {
                 </div>
               ))}
             </div>
+            <Boton
+              variant="success"
+              className="mt-4"
+              onClick={() => {
+                const nuevoCapitulo = {
+                  id: Date.now() + Math.random(),
+                  titulo: "Nuevo Capítulo",
+                  completado: false,
+                  contenido: [],
+                  traducciones: [],
+                  videoItems: [],
+                  audioItems: [],
+                  pdfItems: []
+                };
+                setLibroEditando(prevLibro => ({
+                  ...prevLibro,
+                  capitulos: [...prevLibro.capitulos, nuevoCapitulo]
+                }));
+              }}
+            >
+              <PlusIcon className="h-4 w-4" /> Añadir Capítulo
+            </Boton>
           </div>
         </div>
         <div className="flex justify-end gap-4 mt-6">
