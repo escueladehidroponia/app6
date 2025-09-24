@@ -508,6 +508,11 @@ function App() {
     if (libroActualizado) {
       setLibroLeyendo(libroActualizado);
     }
+    if (annotation.type === 'note') {
+      mostrarNotificacion("Nota guardada con éxito.");
+    } else {
+      mostrarNotificacion("Subrayado guardado con éxito.");
+    }
   };
 
   const handleRemoveAnnotation = (libroId, capituloId, annotationId) => {

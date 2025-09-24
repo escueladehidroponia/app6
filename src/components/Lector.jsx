@@ -22,6 +22,7 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
   });
   const [selection, setSelection] = useState(null);
   const contentRef = useRef(null);
+  const [notaViendo, setNotaViendo] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('lectorConfig', JSON.stringify(config));
@@ -43,7 +44,6 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
     const sel = window.getSelection();
     if (sel.rangeCount > 0 && !sel.isCollapsed) {
       const range = sel.getRangeAt(0);
-      // Ignorar selecciones dentro de los botones o la UI
       if (contentRef.current && contentRef.current.contains(range.commonAncestorContainer)) {
         const rect = range.getBoundingClientRect();
         setSelection({ range, rect });
@@ -62,7 +62,7 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
     return range.toString().length;
   };
 
-  const handleHighlight = () => {
+  const createAnnotation = (type) => {
     if (!selection || !contentRef.current) return;
 
     const { range } = selection;
@@ -72,25 +72,52 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
     const start = getAbsoluteOffset(range.startContainer, range.startOffset, contentDiv);
     const end = getAbsoluteOffset(range.endContainer, range.endOffset, contentDiv);
 
-    // Limpiar la UI de selección de todas formas
+    const currentAnnotations = libro.capitulos[capituloActual].annotations || [];
+    const overlaps = currentAnnotations.some(a => (start < a.end && end > a.start));
+
+    if (overlaps) {
+      alert("No se pueden crear anotaciones que se superpongan. Por favor, elimina la anotación existente primero.");
+      setSelection(null);
+      window.getSelection().removeAllRanges();
+      return;
+    }
+
+    let noteContent;
+    if (type === 'note') {
+      noteContent = prompt("Escribe tu nota:")?.trim();
+      if (!noteContent) {
+        setSelection(null);
+        window.getSelection().removeAllRanges();
+        return;
+      }
+    }
+
     setSelection(null);
     window.getSelection().removeAllRanges();
 
     if (start >= end) {
-      console.warn("Highlight failed: Invalid range selected.");
+      console.warn("Annotation creation failed: Invalid range selected.");
       return;
     }
 
     const text = range.toString();
-
-    onAddAnnotation(libro.id, capitulo.id, {
+    const annotation = {
       id: Date.now(),
-      type: 'highlight',
+      type,
       start,
       end,
       text,
-    });
+    };
+
+    if (type === 'note') {
+      annotation.note = noteContent;
+    }
+
+    onAddAnnotation(libro.id, capitulo.id, annotation);
   };
+
+  const handleHighlight = () => createAnnotation('highlight');
+  const handleTakeNote = () => createAnnotation('note');
 
   const renderContentWithAnnotations = () => {
     const text = capitulo.contenido.find(c => c.artesanoId === 'base')?.texto || 'Este capítulo no tiene contenido base.';
@@ -104,15 +131,38 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
         if (annotation.start > lastIndex) {
           parts.push(text.substring(lastIndex, annotation.start));
         }
-        parts.push(
-          <mark 
-            key={annotation.id} 
-            className="bg-yellow-300/70 cursor-pointer"
-            onClick={() => onRemoveAnnotation(libro.id, capitulo.id, annotation.id)}
-          >
-            {text.substring(annotation.start, annotation.end)}
-          </mark>
-        );
+
+        const handleRemove = (e) => {
+            e.preventDefault();
+            if (window.confirm(`¿Estás seguro de que quieres eliminar est${annotation.type === 'note' ? 'a nota' : 'e subrayado'}?`)) {
+                onRemoveAnnotation(libro.id, capitulo.id, annotation.id);
+            }
+        };
+
+        if (annotation.type === 'note') {
+            parts.push(
+              <mark
+                key={annotation.id}
+                className="bg-blue-200/70 cursor-pointer underline decoration-dotted decoration-blue-500"
+                onClick={() => setNotaViendo(annotation)}
+                onContextMenu={handleRemove}
+                title="Click para ver la nota. Click derecho para eliminar."
+              >
+                {text.substring(annotation.start, annotation.end)}
+              </mark>
+            );
+        } else { // 'highlight'
+            parts.push(
+              <mark
+                key={annotation.id}
+                className="bg-yellow-300/70 cursor-pointer"
+                onClick={handleRemove}
+                title="Click para eliminar el subrayado."
+              >
+                {text.substring(annotation.start, annotation.end)}
+              </mark>
+            );
+        }
         lastIndex = annotation.end;
       });
 
@@ -154,10 +204,11 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
       <main className="flex-grow overflow-y-auto p-8 md:p-12 lg:p-16 relative" ref={contentRef} onMouseUp={handleMouseUp}>
         {selection && (
           <div 
-            style={{ top: selection.rect.top - contentRef.current.getBoundingClientRect().top - 40, left: selection.rect.left - contentRef.current.getBoundingClientRect().left + selection.rect.width / 2 - 30}} 
-            className="absolute z-10"
+            style={{ top: selection.rect.top - contentRef.current.getBoundingClientRect().top - 40, left: selection.rect.left - contentRef.current.getBoundingClientRect().left + selection.rect.width / 2 - 50}} 
+            className="absolute z-10 flex gap-2"
           >
             <Boton onClick={handleHighlight}>Subrayar</Boton>
+            <Boton onClick={handleTakeNote}>Tomar Nota</Boton>
           </div>
         )}
         <div 
@@ -181,6 +232,22 @@ export default function Lector({ libro, onVolver, onAddAnnotation, onRemoveAnnot
           Siguiente <ArrowRightIcon className="h-5 w-5" />
         </Boton>
       </footer>
+
+      {/* Modal para ver la nota */}
+      {notaViendo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" onClick={() => setNotaViendo(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md m-4 p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Nota</h3>
+            <p className="mb-4 whitespace-pre-wrap text-gray-600 dark:text-gray-300 italic border-l-4 border-gray-300 pl-4">"{notaViendo.text}"</p>
+            <div className="bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-md">
+              <p className="whitespace-pre-wrap">{notaViendo.note}</p>
+            </div>
+            <div className="flex justify-end mt-6">
+              <Boton onClick={() => setNotaViendo(null)}>Cerrar</Boton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
