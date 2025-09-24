@@ -100,7 +100,7 @@ function App() {
   const [nuevaColeccion, setNuevaColeccion] = useState({ nombre: '' });
 
   // Estado para la vista "Mis Libros"
-  const [nuevoLibro, setNuevoLibro] = useState({ titulo: '', indice: '' });
+  const [nuevoLibro, setNuevoLibro] = useState({ titulo: '', indice: '', coverUrl: '' });
   const [libroEditando, setLibroEditando] = useState(null);
   const [filtroColeccion, setFiltroColeccion] = useState('todas');
 
@@ -435,12 +435,13 @@ function App() {
     const nuevo = {
       id: Date.now(),
       titulo: nuevoLibro.titulo.trim(),
+      coverUrl: nuevoLibro.coverUrl,
       capitulos,
       fechaCreacion: new Date().toISOString(),
       collectionId: null,
     };
     setLibros([...libros, nuevo]);
-    setNuevoLibro({ titulo: '', indice: '' });
+    setNuevoLibro({ titulo: '', indice: '', coverUrl: '' });
     mostrarNotificacion("¡Libro creado con éxito!");
   };
 
@@ -1146,6 +1147,15 @@ function App() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">URL de la Portada</label>
+            <Input
+              type="text"
+              placeholder="https://example.com/portada.jpg"
+              value={libroEditando.coverUrl || ''}
+              onChange={(e) => setLibroEditando({ ...libroEditando, coverUrl: e.target.value })}
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Capítulos</label>
             <div className="space-y-2">
               {libroEditando.capitulos.map((capitulo, index) => (
@@ -1499,6 +1509,7 @@ function App() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {librosFiltrados.map(libro => (
             <Card key={libro.id} className="flex flex-col justify-between">
+              {libro.coverUrl && <img src={libro.coverUrl} alt={`Portada de ${libro.titulo}`} className="w-full h-48 object-cover mb-4 rounded-md" />}
               <div>
                 <h3 className="text-lg font-bold mb-2">{libro.titulo}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{libro.capitulos.length} capítulos</p>
@@ -1535,6 +1546,7 @@ function App() {
              <form onSubmit={handleCrearLibro} className="w-full space-y-3">
                 <Input placeholder="Título del libro" value={nuevoLibro.titulo} onChange={e => setNuevoLibro({...nuevoLibro, titulo: e.target.value})} />
                 <Textarea placeholder="Índice (un capítulo por línea)" rows="4" value={nuevoLibro.indice} onChange={e => setNuevoLibro({...nuevoLibro, indice: e.target.value})} />
+                <Input placeholder="URL de la portada (opcional)" value={nuevoLibro.coverUrl} onChange={e => setNuevoLibro({...nuevoLibro, coverUrl: e.target.value})} />
                 <Boton type="submit" className="w-full"><PlusIcon className="h-5 w-5" /> Crear Libro</Boton>
              </form>
           </Card>
@@ -1903,11 +1915,13 @@ function App() {
     const contenidoFiltrado = libroSeleccionado.capitulos
     .filter(cap => capituloBibliotecaSeleccionado === 'todos' || cap.id === parseFloat(capituloBibliotecaSeleccionado))
     .map(cap => {
-        const contenidos = cap.contenido.filter(cont =>
+        const contenidos = cap.contenido.filter(
+            cont =>
             (filtroArtesano === 'todos' || String(cont.artesanoId) === filtroArtesano) &&
             (grupoArtesanoSeleccionado === 'todos' || artesanosDelGrupo.includes(String(cont.artesanoId)))
         );
-        const traduccionesFiltradas = cap.traducciones ? cap.traducciones.filter(trad =>
+        const traduccionesFiltradas = cap.traducciones ? cap.traducciones.filter(
+            trad =>
             (grupoArtesanoSeleccionado === 'todos' && (filtroArtesano === 'todos' || filtroArtesano === 'multicultural'))
         ) : [];
         return { ...cap, contenidos, traducciones: traduccionesFiltradas };
