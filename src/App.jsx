@@ -27,6 +27,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import PdfViewer from './components/PdfViewer'; // Using outline icons
+import Lector from './components/Lector';
 
 // --- COMPONENTES DE UI REUTILIZABLES ---
 
@@ -1459,28 +1460,19 @@ function App() {
         <div className="text-center py-20">
           <p className="text-4xl mx-auto text-gray-400 mb-4"><BookOpenIcon className="h-10 w-10" /></p>
           <h2 className="text-2xl font-bold">Lector</h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Selecciona un libro desde "Mis Libros" para empezar a leer.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">No hay libro seleccionado para leer.</p>
         </div>
       );
     }
 
     return (
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">{libroLeyendo.titulo}</h2>
-          <Boton variant="secundario" onClick={() => { setLibroLeyendo(null); setVistaActual('Mis Libros'); }}>Volver a Mis Libros</Boton>
-        </div>
-        <div className="space-y-8">
-          {libroLeyendo.capitulos.map(capitulo => (
-            <div key={capitulo.id}>
-              <h3 className="text-xl font-semibold border-b-2 border-blue-500 pb-2 mb-4">{capitulo.titulo}</h3>
-              <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">
-                {capitulo.contenido.find(c => c.artesanoId === 'base')?.texto || ''}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Lector 
+        libro={libroLeyendo} 
+        onVolver={() => {
+          setLibroLeyendo(null);
+          setVistaActual('Mis Libros');
+        }} 
+      />
     );
   };
 
