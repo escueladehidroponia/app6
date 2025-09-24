@@ -1,12 +1,28 @@
 @echo off
 title Fabrica de Contenido v5.0 Server
-echo Iniciando el servidor y abriendo la aplicacion...
+echo.
+echo =======================================================
+echo   INICIANDO SERVIDOR DE DESARROLLO (VITE)...
+echo =======================================================
+echo.
+echo   Por favor, espera a que aparezca el mensaje:
+echo   "VITE v... ready in ..."
+echo.
+echo   Este proceso se quedara activo.
+echo   Para detener el servidor, cierra esta ventana.
+echo.
 
-:: Navega al directorio del proyecto
-cd /d "d:\app4"
+:: Navega al directorio correcto
+cd /d "D:\app6"
 
-:: Abre la URL en el navegador por defecto
+:: Inicia el servidor. El comando "start" hace que se ejecute en una nueva ventana.
+:: Esto permite que el script continue al siguiente paso.
+start "Vite Server" npm run dev
+
+:: Espera unos segundos para dar tiempo al servidor a arrancar
+timeout /t 5 > nul
+
+:: Ahora si, abre el navegador
 start http://localhost:5173
 
-:: Inicia el servidor de desarrollo
-npm run dev
+exit
