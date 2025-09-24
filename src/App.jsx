@@ -159,7 +159,20 @@ function App() {
     let parsedLibros = [];
     try {
       if (librosGuardados) {
-        parsedLibros = JSON.parse(librosGuardados);
+        let loaded = JSON.parse(librosGuardados);
+        // Migration: Ensure chapters have annotations array
+        if (Array.isArray(loaded)) {
+            loaded.forEach(libro => {
+              if (libro.capitulos && Array.isArray(libro.capitulos)) {
+                libro.capitulos.forEach(capitulo => {
+                  if (!capitulo.annotations) {
+                    capitulo.annotations = [];
+                  }
+                });
+              }
+            });
+        }
+        parsedLibros = loaded;
         setLibros(parsedLibros);
       }
     } catch (error) {
@@ -431,7 +444,8 @@ function App() {
       traducciones: [],
       videoItems: [],
       audioItems: [],
-      pdfItems: []
+      pdfItems: [],
+      annotations: []
     }));
 
     const nuevo = {
@@ -472,6 +486,54 @@ function App() {
     mostrarNotificacion("Libro asignado a colección.");
   };
   
+  const handleAddAnnotation = (libroId, capituloId, annotation) => {
+    const nuevosLibros = libros.map(libro => {
+      if (libro.id === libroId) {
+        const nuevosCapitulos = libro.capitulos.map(capitulo => {
+          if (capitulo.id === capituloId) {
+            const prevAnnotations = capitulo.annotations || [];
+            return {
+              ...capitulo,
+              annotations: [...prevAnnotations, annotation]
+            };
+          }
+          return capitulo;
+        });
+        return { ...libro, capitulos: nuevosCapitulos };
+      }
+      return libro;
+    });
+    setLibros(nuevosLibros);
+    const libroActualizado = nuevosLibros.find(l => l.id === libroId);
+    if (libroActualizado) {
+      setLibroLeyendo(libroActualizado);
+    }
+  };
+
+  const handleRemoveAnnotation = (libroId, capituloId, annotationId) => {
+    const nuevosLibros = libros.map(libro => {
+      if (libro.id === libroId) {
+        const nuevosCapitulos = libro.capitulos.map(capitulo => {
+          if (capitulo.id === capituloId) {
+            const prevAnnotations = capitulo.annotations || [];
+            return {
+              ...capitulo,
+              annotations: prevAnnotations.filter(a => a.id !== annotationId)
+            };
+          }
+          return capitulo;
+        });
+        return { ...libro, capitulos: nuevosCapitulos };
+      }
+      return libro;
+    });
+    setLibros(nuevosLibros);
+    const libroActualizado = nuevosLibros.find(l => l.id === libroId);
+    if (libroActualizado) {
+      setLibroLeyendo(libroActualizado);
+    }
+  };
+
   const handleExportarBiblioteca = () => {
     try {
       const datos = {
@@ -1387,7 +1449,8 @@ function App() {
                   traducciones: [],
                   videoItems: [],
                   audioItems: [],
-                  pdfItems: []
+                  pdfItems: [],
+                  annotations: []
                 };
                 setLibroEditando(prevLibro => ({
                   ...prevLibro,
@@ -1472,6 +1535,8 @@ function App() {
           setLibroLeyendo(null);
           setVistaActual('Mis Libros');
         }} 
+        onAddAnnotation={handleAddAnnotation}
+        onRemoveAnnotation={handleRemoveAnnotation}
       />
     );
   };
