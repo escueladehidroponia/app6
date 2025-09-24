@@ -239,6 +239,7 @@ function App() {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
   const [pdfModalTitle, setPdfModalTitle] = useState('');
+  const [contenidoEditando, setContenidoEditando] = useState(null);
 
   // Estado para la gestión de etiquetas
   const [mediaTags, setMediaTags] = useState({
@@ -1062,6 +1063,69 @@ function App() {
     return (
       <Modal isOpen={pdfModalOpen} onClose={cerrarPdfModal} title={pdfModalTitle}>
         <PdfViewer initialFile={pdfUrl} showPicker={false} />
+      </Modal>
+    );
+  };
+
+  const handleEditarContenido = (libroId, capituloId, artesanoId) => {
+    const libro = libros.find(l => l.id === libroId);
+    if (!libro) return;
+    const capitulo = libro.capitulos.find(c => c.id === capituloId);
+    if (!capitulo) return;
+    const contenido = capitulo.contenido.find(c => c.artesanoId === artesanoId);
+    if (!contenido) return;
+
+    setContenidoEditando({
+      libroId,
+      capituloId,
+      artesanoId,
+      texto: contenido.texto,
+      nombreArtesano: contenido.nombreArtesano
+    });
+  };
+
+  const renderModalEditarContenido = () => {
+    if (!contenidoEditando) return null;
+
+    const handleGuardar = () => {
+      setLibros(prevLibros => prevLibros.map(libro => {
+        if (libro.id === contenidoEditando.libroId) {
+          return {
+            ...libro,
+            capitulos: libro.capitulos.map(capitulo => {
+              if (capitulo.id === contenidoEditando.capituloId) {
+                return {
+                  ...capitulo,
+                  contenido: capitulo.contenido.map(cont => {
+                    if (cont.artesanoId === contenidoEditando.artesanoId) {
+                      return { ...cont, texto: contenidoEditando.texto };
+                    }
+                    return cont;
+                  })
+                };
+              }
+              return capitulo;
+            })
+          };
+        }
+        return libro;
+      }));
+      setContenidoEditando(null);
+      mostrarNotificacion("Contenido actualizado con éxito.");
+    };
+
+    return (
+      <Modal isOpen={!!contenidoEditando} onClose={() => setContenidoEditando(null)} title={`Editar: ${contenidoEditando.nombreArtesano}`}>
+        <Textarea
+          rows="15"
+          value={contenidoEditando.texto}
+          onChange={(e) => setContenidoEditando({ ...contenidoEditando, texto: e.target.value })}
+          className="text-base"
+        />
+        <div className="flex justify-end gap-4 mt-6">
+          <Boton variant="secundario" onClick={() => setContenidoEditando(null)}>Cancelar</Boton>
+          <Boton onClick={handleGuardar}>Guardar Cambios</Boton>
+        </div>
       </Modal>
     );
   };
@@ -2014,6 +2078,13 @@ function App() {
                               >
                                 <ClipboardDocumentListIcon className="h-5 w-5" />
                               </button>
+                              <button
+                                onClick={() => handleEditarContenido(libroSeleccionado.id, cap.id, cont.artesanoId)}
+                                className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 ml-2"
+                                title="Editar contenido"
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
                               {cont.artesanoId !== 'base' && (
                                 <button
                                   onClick={() => handleEliminarContenido(libroSeleccionado.id, cap.id, cont.artesanoId)}
@@ -2191,6 +2262,7 @@ function App() {
       {renderVideoPlayerModal()}
       {renderAudioPlayerModal()}
       {renderPdfViewerModal()}
+      {renderModalEditarContenido()}
       
       {renderSidebar()}
       
