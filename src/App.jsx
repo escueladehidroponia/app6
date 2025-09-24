@@ -78,6 +78,7 @@ function App() {
   const [colecciones, setColecciones] = useState([]);
   const [apiKey, setApiKey] = useState('');
   const [libroSeleccionado, setLibroSeleccionado] = useState(null);
+  const [libroLeyendo, setLibroLeyendo] = useState(null);
   const [notificacion, setNotificacion] = useState({ mensaje: '', visible: false });
   const [modoOscuro, setModoOscuro] = useState(false);
   const [sidebarAbierta, setSidebarAbierta] = useState(false);
@@ -670,6 +671,11 @@ function App() {
     setTextoBase('');
     setContenidoGenerado([]);
     setVistaActual('Área de Creación');
+  };
+
+  const handleLeerLibro = (libro) => {
+    setLibroLeyendo(libro);
+    setVistaActual('Lector');
   };
 
   const handleMarcarCapitulo = (idCapitulo) => {
@@ -1447,6 +1453,36 @@ function App() {
     );
   };
   
+  const renderVistaLector = () => {
+    if (!libroLeyendo) {
+      return (
+        <div className="text-center py-20">
+          <p className="text-4xl mx-auto text-gray-400 mb-4"><BookOpenIcon className="h-10 w-10" /></p>
+          <h2 className="text-2xl font-bold">Lector</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Selecciona un libro desde "Mis Libros" para empezar a leer.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">{libroLeyendo.titulo}</h2>
+          <Boton variant="secundario" onClick={() => { setLibroLeyendo(null); setVistaActual('Mis Libros'); }}>Volver a Mis Libros</Boton>
+        </div>
+        <div className="space-y-8">
+          {libroLeyendo.capitulos.map(capitulo => (
+            <div key={capitulo.id}>
+              <h3 className="text-xl font-semibold border-b-2 border-blue-500 pb-2 mb-4">{capitulo.titulo}</h3>
+              <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+                {capitulo.contenido.find(c => c.artesanoId === 'base')?.texto || ''}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const renderSidebar = () => (
     <aside className={`relative bg-gray-50 dark:bg-gray-800 h-full flex-shrink-0 flex flex-col border-r dark:border-gray-700 transition-all duration-300 z-40 ${sidebarColapsada ? 'w-20' : 'w-64'}`}>
@@ -1536,6 +1572,7 @@ function App() {
               </div>
               <div className="flex gap-2 mt-4">
                 <Boton onClick={() => handleSeleccionarLibro(libro)} className="flex-1">Abrir</Boton>
+                <Boton onClick={() => handleLeerLibro(libro)} variant="success" className="flex-1">LEER</Boton>
                 <Boton onClick={() => setLibroEditando(libro)} variant="secundario" className="px-3"><PencilIcon className="h-5 w-5" /></Boton>
                 <Boton onClick={() => handleEliminarLibro(libro.id)} variant="peligro" className="px-3"><TrashIcon className="h-5 w-5" /></Boton>
               </div>
@@ -1665,7 +1702,7 @@ function App() {
                         {artesano ? artesano.nombre : 'Artesano no encontrado'}
                       </span>
                     );
-                  })}
+                  })};
                 </div>
               </Card>
             ))}
@@ -2203,6 +2240,7 @@ function App() {
         {vistaActual === 'Área de Creación' && renderVistaAreaDeCreacion()}
         {vistaActual === 'Biblioteca' && renderVistaBiblioteca()}
         {vistaActual === 'Artesanos' && renderVistaArtesanos()}
+        {vistaActual === 'Lector' && renderVistaLector()}
         
         {vistaActual === 'Gestión de Etiquetas' && renderVistaGestionEtiquetas()}
       </main>
